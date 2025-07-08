@@ -10,11 +10,12 @@ const upgradesData = [
   { id: 'solar', name: 'Solar Farm', baseCost: 5000, income: 25 },
 ];
 
-const achievementsList = [
-  { id: 'click_once', name: 'First Click', condition: (state) => state.totalEarned >= 0.1 },
-  { id: 'earn_100', name: 'Earn 100 Pi', condition: (state) => state.totalEarned >= 100 },
-  { id: 'own_10_miners', name: 'Own 10 Miners', condition: (state) => (state.upgrades['miner'] || 0) >= 10 },
-  { id: 'earn_5000', name: 'Earn 5,000 Pi', condition: (state) => state.totalEarned >= 5000 },
+const piShopItems = [
+  { id: 'boost10min', name: 'x2 Income (10 min)', cost: 1, type: 'tempBoost' },
+  { id: 'instant500', name: 'Instant 500 Pi', cost: 2, type: 'instantPi', amount: 500 },
+  { id: 'autoclick10', name: 'Auto Clicker (10 min)', cost: 1.5, type: 'autoClicker' },
+  { id: 'clickBoost', name: '+0.5 Click Power', cost: 3, type: 'clickBoost' },
+  { id: 'aiAssistant', name: 'AI Assistant (+5% forever)', cost: 5, type: 'permBoost' },
 ];
 
 function App() {
@@ -27,8 +28,10 @@ function App() {
   const [floatingTexts, setFloatingTexts] = useState([]);
   const [rebirthCount, setRebirthCount] = useState(() => parseInt(localStorage.getItem('rebirthCount')) || 0);
   const [rebirthPoints, setRebirthPoints] = useState(() => parseInt(localStorage.getItem('rebirthPoints')) || 0);
-  const [showAchievements, setShowAchievements] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [activeBoost, setActiveBoost] = useState(null);
+  const [permBoost, setPermBoost] = useState(() => parseFloat(localStorage.getItem('permBoost')) || 0);
+  const [autoClickerActive, setAutoClickerActive] = useState(false);
 
   const addFloatingText = (text) => {
     const id = Date.now();
@@ -48,7 +51,8 @@ function App() {
     localStorage.setItem('timePlayed', timePlayed);
     localStorage.setItem('rebirthCount', rebirthCount);
     localStorage.setItem('rebirthPoints', rebirthPoints);
-  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints]);
+    localStorage.setItem('permBoost', permBoost);
+  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints, permBoost]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -57,10 +61,21 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (autoClickerActive) {
+      const interval = setInterval(() => {
+        handleClick();
+      }, 1000);
+      setTimeout(() => setAutoClickerActive(false), 600000);
+      return () => clearInterval(interval);
+    }
+  }, [autoClickerActive]);
+
+  const incomeMultiplier = (1 + rebirthCount * 0.1) * (rebirthCount >= 1 ? 10 : 1) * (activeBoost ? 2 : 1) * (1 + permBoost);
   const totalIncome = upgradesData.reduce((acc, upgrade) => {
     const count = upgrades[upgrade.id] || 0;
     return acc + count * upgrade.income;
-  }, 0) * (1 + rebirthCount * 0.1) * (rebirthCount >= 1 ? 10 : 1);
+  }, 0) * incomeMultiplier;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -105,7 +120,7 @@ function App() {
 
   const handleRebirth = () => {
     if (piBalance >= 10000) {
-      if (window.confirm("Are you sure you want to REBIRTH? This will reset all progress.")) {
+      if (window.confirm("Migrate to Mainnet? This will reset your progress and grant bonuses.")) {
         setPiBalance(0);
         setClickPower(0.1);
         setUpgrades({});
@@ -113,52 +128,59 @@ function App() {
         setTotalSpent(0);
         setTimePlayed(0);
         setRebirthCount(prev => prev + 1);
-        setRebirthPoints(prev => prev + 1);
-        localStorage.clear();
+        setRebirthPoints(prev => prev + 10);
+        setActiveBoost(null);
+        setAutoClickerActive(false);
       }
     } else {
-      alert("You need at least 10,000 Pi to rebirth.");
+      alert("You need at least 10,000 Pi to Migrate to Mainnet.");
     }
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
-  };
+  const handleUseShopItem = (item) => {
+    if (piBalance < item.cost) return alert("Not enough Pi!");
 
-  const clickUpgradeCost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
+    setPiBalance(prev => parseFloat((prev - item.cost).toFixed(4)));
+    setTotalSpent(prev => parseFloat((prev + item.cost).toFixed(4)));
+
+    switch (item.type) {
+      case 'tempBoost':
+        setActiveBoost(true);
+        setTimeout(() => setActiveBoost(false), 600000);
+        break;
+      case 'instantPi':
+        setPiBalance(prev => prev + item.amount);
+        break;
+      case 'autoClicker':
+        setAutoClickerActive(true);
+        break;
+      case 'clickBoost':
+        setClickPower(prev => parseFloat((prev + 0.5).toFixed(2)));
+        break;
+      case 'permBoost':
+        setPermBoost(prev => parseFloat((prev + 0.05).toFixed(3)));
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <div className="app">
       <h1>Pi Clicker</h1>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <button onClick={() => setShowAchievements(!showAchievements)}>
-          {showAchievements ? 'Hide' : 'Show'} Achievements
-        </button>
-        <button onClick={() => setShowShop(!showShop)} style={{ marginLeft: '1rem' }}>
-          {showShop ? 'Hide' : 'Show'} Shop
-        </button>
-      </div>
-
-      {showAchievements && (
-        <div className="panel">
-          <h2>Achievements</h2>
-          <ul>
-            {achievementsList.map(ach => (
-              <li key={ach.id}>
-                {ach.name} {ach.condition({ totalEarned, upgrades }) ? '✅' : '❌'}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <button onClick={() => setShowShop(!showShop)} style={{ marginBottom: '1rem' }}>
+        {showShop ? 'Hide Shop' : 'Open Pi Shop'}
+      </button>
 
       {showShop && (
         <div className="panel">
           <h2>Pi Shop</h2>
-          <p>Coming soon: Buy special boosts and items with real Pi!</p>
+          {piShopItems.map(item => (
+            <button key={item.id} onClick={() => handleUseShopItem(item)} style={{ display: 'block', marginBottom: '0.5rem' }}>
+              {item.name} – {item.cost} Pi
+            </button>
+          ))}
         </div>
       )}
 
@@ -179,9 +201,9 @@ function App() {
         <h2>Click Upgrade</h2>
         <button
           onClick={handleClickUpgrade}
-          className={piBalance >= clickUpgradeCost ? 'can-afford' : ''}
+          className={piBalance >= Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1)) ? 'can-afford' : ''}
         >
-          Upgrade click (+0.1 Pi) – {clickUpgradeCost} Pi
+          Upgrade click (+0.1 Pi) – {Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1))} Pi
         </button>
 
         <h2 style={{ marginTop: '2rem' }}>Upgrades</h2>
@@ -207,9 +229,9 @@ function App() {
         <h2>Statistics</h2>
         <p>Total earned: {totalEarned.toFixed(2)} Pi</p>
         <p>Total spent: {totalSpent.toFixed(2)} Pi</p>
-        <p>Time played: {formatTime(timePlayed)}</p>
+        <p>Time played: {Math.floor(timePlayed / 60)}m {timePlayed % 60}s</p>
         <button onClick={handleRebirth} style={{ marginTop: '1rem', backgroundColor: '#9b59b6', color: 'white' }}>
-          Rebirth (10,000 Pi)
+          Migrate to Mainnet (10,000 Pi)
         </button>
       </div>
     </div>
