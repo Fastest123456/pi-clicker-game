@@ -70,3 +70,29 @@ p {
 .shop button:hover {
   background-color: #d35400;
 }
+
+.float-text {
+  position: absolute;
+  color: #2ecc71;
+  font-weight: bold;
+  animation: floatUp 1s ease-out forwards;
+  pointer-events: none;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50px);
+  }
+}
+
+.shop button.can-afford {
+  box-shadow: 0 0 10px 3px #2ecc71;
+}
+

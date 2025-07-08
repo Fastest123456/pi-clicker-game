@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 const upgradesData = [
@@ -11,31 +11,23 @@ const upgradesData = [
 ];
 
 function App() {
-  const [piBalance, setPiBalance] = useState(() => {
-    return parseFloat(localStorage.getItem('piBalance')) || 0;
-  });
+  const [piBalance, setPiBalance] = useState(() => parseFloat(localStorage.getItem('piBalance')) || 0);
+  const [upgrades, setUpgrades] = useState(() => JSON.parse(localStorage.getItem('upgrades')) || {});
+  const [clickPower, setClickPower] = useState(() => parseFloat(localStorage.getItem('clickPower')) || 0.1);
+  const [totalEarned, setTotalEarned] = useState(() => parseFloat(localStorage.getItem('totalEarned')) || 0);
+  const [totalSpent, setTotalSpent] = useState(() => parseFloat(localStorage.getItem('totalSpent')) || 0);
+  const [timePlayed, setTimePlayed] = useState(() => parseInt(localStorage.getItem('timePlayed')) || 0);
+  const [floatingTexts, setFloatingTexts] = useState([]);
 
-  const [upgrades, setUpgrades] = useState(() => {
-    return JSON.parse(localStorage.getItem('upgrades')) || {};
-  });
+  const addFloatingText = (text) => {
+    const id = Date.now();
+    const newText = { id, text };
+    setFloatingTexts(prev => [...prev, newText]);
+    setTimeout(() => {
+      setFloatingTexts(prev => prev.filter(t => t.id !== id));
+    }, 1000);
+  };
 
-  const [clickPower, setClickPower] = useState(() => {
-    return parseFloat(localStorage.getItem('clickPower')) || 0.1;
-  });
-
-  const [totalEarned, setTotalEarned] = useState(() => {
-    return parseFloat(localStorage.getItem('totalEarned')) || 0;
-  });
-
-  const [totalSpent, setTotalSpent] = useState(() => {
-    return parseFloat(localStorage.getItem('totalSpent')) || 0;
-  });
-
-  const [timePlayed, setTimePlayed] = useState(() => {
-    return parseInt(localStorage.getItem('timePlayed')) || 0;
-  });
-
-  // Salvestamine
   useEffect(() => {
     localStorage.setItem('piBalance', piBalance);
     localStorage.setItem('upgrades', JSON.stringify(upgrades));
@@ -45,7 +37,6 @@ function App() {
     localStorage.setItem('timePlayed', timePlayed);
   }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed]);
 
-  // Aeg kasvab iga sekund
   useEffect(() => {
     const timer = setInterval(() => {
       setTimePlayed(prev => prev + 1);
@@ -58,7 +49,6 @@ function App() {
     return acc + count * upgrade.income;
   }, 0);
 
-  // Smooth Pi/s voolamine
   useEffect(() => {
     const interval = setInterval(() => {
       const step = totalIncome / 20;
@@ -77,6 +67,7 @@ function App() {
       setTotalEarned(prevEarned => parseFloat((prevEarned + clickPower).toFixed(4)));
       return updated;
     });
+    addFloatingText(`+${clickPower.toFixed(1)} Pi`);
   };
 
   const handleBuy = (id, baseCost) => {
@@ -84,10 +75,7 @@ function App() {
     const cost = Math.floor(baseCost * Math.pow(1.2, count));
     if (piBalance >= cost) {
       setPiBalance(prev => parseFloat((prev - cost).toFixed(4)));
-      setUpgrades(prev => ({
-        ...prev,
-        [id]: count + 1,
-      }));
+      setUpgrades(prev => ({ ...prev, [id]: count + 1 }));
       setTotalSpent(prev => parseFloat((prev + cost).toFixed(4)));
     }
   };
@@ -115,7 +103,6 @@ function App() {
 
   const clickUpgradeCost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
 
-  // Sekundid minutiteks
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -133,9 +120,16 @@ function App() {
         <img src="/pi-coin.png" alt="Pi coin" className="coin-image" />
       </button>
 
+      {floatingTexts.map(t => (
+        <div key={t.id} className="float-text">{t.text}</div>
+      ))}
+
       <div className="shop">
         <h2>Click Upgrade</h2>
-        <button onClick={handleClickUpgrade}>
+        <button
+          onClick={handleClickUpgrade}
+          className={piBalance >= clickUpgradeCost ? 'can-afford' : ''}
+        >
           Upgrade click (+0.1 Pi) – {clickUpgradeCost} Pi
         </button>
 
@@ -147,7 +141,10 @@ function App() {
             <div key={upg.id} style={{ marginBottom: '1rem' }}>
               <p><strong>{upg.name}</strong> (owned: {count})</p>
               <p>Generates: +{upg.income}/s</p>
-              <button onClick={() => handleBuy(upg.id, upg.baseCost)}>
+              <button
+                onClick={() => handleBuy(upg.id, upg.baseCost)}
+                className={piBalance >= cost ? 'can-afford' : ''}
+              >
                 Buy for {cost} Pi
               </button>
             </div>
