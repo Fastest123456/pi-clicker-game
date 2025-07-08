@@ -39,13 +39,14 @@ function App() {
     return acc + count * upgrade.income;
   }, 0);
 
-  // Passiivne teenimine
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPiBalance(prev => parseFloat((prev + totalIncome).toFixed(2)));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [totalIncome]);
+  // Smooth passive income
+useEffect(() => {
+  const interval = setInterval(() => {
+    const step = totalIncome / 20; // jagame 20-ks → 50ms intervall = 1000ms kokku
+    setPiBalance(prev => parseFloat((prev + step).toFixed(4)));
+  }, 50); // 20 korda sekundis
+  return () => clearInterval(interval);
+}, [totalIncome]);
 
   const handleClick = () => {
     setPiBalance(prev => parseFloat((prev + clickPower).toFixed(2)));
