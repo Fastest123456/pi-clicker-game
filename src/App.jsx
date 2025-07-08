@@ -18,6 +18,13 @@ const piShopItems = [
   { id: 'aiAssistant', name: 'AI Assistant (+5% forever)', cost: 5, type: 'permBoost' },
 ];
 
+const achievementsList = [
+  { id: 'click1', label: 'First Click', condition: (stats) => stats.totalEarned >= 0.1 },
+  { id: 'pi100', label: 'Earn 100 Pi', condition: (stats) => stats.totalEarned >= 100 },
+  { id: 'miner10', label: 'Own 10 Miners', condition: (stats) => (stats.upgrades['miner'] || 0) >= 10 },
+  { id: 'pi5000', label: 'Earn 5000 Pi', condition: (stats) => stats.totalEarned >= 5000 },
+];
+
 function App() {
   const [piBalance, setPiBalance] = useState(() => parseFloat(localStorage.getItem('piBalance')) || 0);
   const [upgrades, setUpgrades] = useState(() => JSON.parse(localStorage.getItem('upgrades')) || {});
@@ -29,6 +36,8 @@ function App() {
   const [rebirthCount, setRebirthCount] = useState(() => parseInt(localStorage.getItem('rebirthCount')) || 0);
   const [rebirthPoints, setRebirthPoints] = useState(() => parseInt(localStorage.getItem('rebirthPoints')) || 0);
   const [showShop, setShowShop] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showRebirthShop, setShowRebirthShop] = useState(false);
   const [activeBoost, setActiveBoost] = useState(null);
   const [permBoost, setPermBoost] = useState(() => parseFloat(localStorage.getItem('permBoost')) || 0);
   const [autoClickerActive, setAutoClickerActive] = useState(false);
@@ -165,22 +174,44 @@ function App() {
     }
   };
 
+  const completedAchievements = achievementsList.filter(a => a.condition({ totalEarned, upgrades }));
+
   return (
     <div className="app">
       <h1>Pi Clicker</h1>
 
-      <button onClick={() => setShowShop(!showShop)} style={{ marginBottom: '1rem' }}>
-        {showShop ? 'Hide Shop' : 'Open Pi Shop'}
-      </button>
+      <button onClick={() => setShowShop(!showShop)}>{showShop ? 'Hide Shop' : 'Open Pi Shop'}</button>
+      <button onClick={() => setShowAchievements(!showAchievements)}>{showAchievements ? 'Hide Achievements' : 'Show Achievements'}</button>
+      <button onClick={() => setShowRebirthShop(!showRebirthShop)}>{showRebirthShop ? 'Hide Rebirth Shop' : 'Rebirth Bonus Shop'}</button>
 
       {showShop && (
         <div className="panel">
           <h2>Pi Shop</h2>
           {piShopItems.map(item => (
-            <button key={item.id} onClick={() => handleUseShopItem(item)} style={{ display: 'block', marginBottom: '0.5rem' }}>
+            <button key={item.id} onClick={() => handleUseShopItem(item)}>
               {item.name} – {item.cost} Pi
             </button>
           ))}
+        </div>
+      )}
+
+      {showAchievements && (
+        <div className="panel">
+          <h2>Achievements</h2>
+          <ul>
+            {achievementsList.map(a => (
+              <li key={a.id} style={{ color: completedAchievements.includes(a) ? 'green' : 'gray' }}>
+                {a.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {showRebirthShop && (
+        <div className="panel">
+          <h2>Rebirth Bonus Shop</h2>
+          <p>Coming soon: Spend rebirth points for permanent upgrades!</p>
         </div>
       )}
 
@@ -199,40 +230,27 @@ function App() {
 
       <div className="shop">
         <h2>Click Upgrade</h2>
-        <button
-          onClick={handleClickUpgrade}
-          className={piBalance >= Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1)) ? 'can-afford' : ''}
-        >
-          Upgrade click (+0.1 Pi) – {Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1))} Pi
-        </button>
+        <button onClick={handleClickUpgrade}>Upgrade click (+0.1 Pi)</button>
 
-        <h2 style={{ marginTop: '2rem' }}>Upgrades</h2>
+        <h2>Upgrades</h2>
         {upgradesData.map(upg => {
           const count = upgrades[upg.id] || 0;
           const cost = Math.floor(upg.baseCost * Math.pow(1.2, count));
           return (
-            <div key={upg.id} style={{ marginBottom: '1rem' }}>
+            <div key={upg.id}>
               <p><strong>{upg.name}</strong> (owned: {count})</p>
-              <p>Generates: +{upg.income}/s</p>
-              <button
-                onClick={() => handleBuy(upg.id, upg.baseCost)}
-                className={piBalance >= cost ? 'can-afford' : ''}
-              >
-                Buy for {cost} Pi
-              </button>
+              <button onClick={() => handleBuy(upg.id, upg.baseCost)}>Buy for {cost} Pi</button>
             </div>
           );
         })}
       </div>
 
-      <div className="stats" style={{ marginTop: '3rem' }}>
+      <div className="stats">
         <h2>Statistics</h2>
         <p>Total earned: {totalEarned.toFixed(2)} Pi</p>
         <p>Total spent: {totalSpent.toFixed(2)} Pi</p>
         <p>Time played: {Math.floor(timePlayed / 60)}m {timePlayed % 60}s</p>
-        <button onClick={handleRebirth} style={{ marginTop: '1rem', backgroundColor: '#9b59b6', color: 'white' }}>
-          Migrate to Mainnet (10,000 Pi)
-        </button>
+        <button onClick={handleRebirth}>Migrate to Mainnet (10,000 Pi)</button>
       </div>
     </div>
   );
