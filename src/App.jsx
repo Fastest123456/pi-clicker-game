@@ -12,18 +12,27 @@ const upgradesData = [
 
 function App() {
   const [piBalance, setPiBalance] = useState(() => {
-    const saved = localStorage.getItem('piBalance');
-    return saved ? parseFloat(saved) : 0;
+    return parseFloat(localStorage.getItem('piBalance')) || 0;
   });
 
   const [upgrades, setUpgrades] = useState(() => {
-    const saved = localStorage.getItem('upgrades');
-    return saved ? JSON.parse(saved) : {};
+    return JSON.parse(localStorage.getItem('upgrades')) || {};
   });
 
   const [clickPower, setClickPower] = useState(() => {
-    const saved = localStorage.getItem('clickPower');
-    return saved ? parseFloat(saved) : 0.1;
+    return parseFloat(localStorage.getItem('clickPower')) || 0.1;
+  });
+
+  const [totalEarned, setTotalEarned] = useState(() => {
+    return parseFloat(localStorage.getItem('totalEarned')) || 0;
+  });
+
+  const [totalSpent, setTotalSpent] = useState(() => {
+    return parseFloat(localStorage.getItem('totalSpent')) || 0;
+  });
+
+  const [timePlayed, setTimePlayed] = useState(() => {
+    return parseInt(localStorage.getItem('timePlayed')) || 0;
   });
 
   // Salvestamine
@@ -31,48 +40,87 @@ function App() {
     localStorage.setItem('piBalance', piBalance);
     localStorage.setItem('upgrades', JSON.stringify(upgrades));
     localStorage.setItem('clickPower', clickPower);
-  }, [piBalance, upgrades, clickPower]);
+    localStorage.setItem('totalEarned', totalEarned);
+    localStorage.setItem('totalSpent', totalSpent);
+    localStorage.setItem('timePlayed', timePlayed);
+  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed]);
 
-  // Pi per second arvutus
+  // Aeg kasvab iga sekund
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimePlayed(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const totalIncome = upgradesData.reduce((acc, upgrade) => {
     const count = upgrades[upgrade.id] || 0;
     return acc + count * upgrade.income;
   }, 0);
 
-  // Smooth passive income
-useEffect(() => {
-  const interval = setInterval(() => {
-    const step = totalIncome / 20; // jagame 20-ks → 50ms intervall = 1000ms kokku
-    setPiBalance(prev => parseFloat((prev + step).toFixed(4)));
-  }, 50); // 20 korda sekundis
-  return () => clearInterval(interval);
-}, [totalIncome]);
+  // Smooth Pi/s voolamine
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const step = totalIncome / 20;
+      setPiBalance(prev => {
+        const updated = parseFloat((prev + step).toFixed(4));
+        setTotalEarned(prevEarned => parseFloat((prevEarned + step).toFixed(4)));
+        return updated;
+      });
+    }, 50);
+    return () => clearInterval(interval);
+  }, [totalIncome]);
 
   const handleClick = () => {
-    setPiBalance(prev => parseFloat((prev + clickPower).toFixed(2)));
+    setPiBalance(prev => {
+      const updated = parseFloat((prev + clickPower).toFixed(4));
+      setTotalEarned(prevEarned => parseFloat((prevEarned + clickPower).toFixed(4)));
+      return updated;
+    });
   };
 
   const handleBuy = (id, baseCost) => {
     const count = upgrades[id] || 0;
     const cost = Math.floor(baseCost * Math.pow(1.2, count));
     if (piBalance >= cost) {
-      setPiBalance(prev => parseFloat((prev - cost).toFixed(2)));
+      setPiBalance(prev => parseFloat((prev - cost).toFixed(4)));
       setUpgrades(prev => ({
         ...prev,
         [id]: count + 1,
       }));
+      setTotalSpent(prev => parseFloat((prev + cost).toFixed(4)));
     }
   };
 
   const handleClickUpgrade = () => {
     const cost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
     if (piBalance >= cost) {
-      setPiBalance(prev => parseFloat((prev - cost).toFixed(2)));
+      setPiBalance(prev => parseFloat((prev - cost).toFixed(4)));
       setClickPower(prev => parseFloat((prev + 0.1).toFixed(2)));
+      setTotalSpent(prev => parseFloat((prev + cost).toFixed(4)));
+    }
+  };
+
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to reset the game?")) {
+      setPiBalance(0);
+      setClickPower(0.1);
+      setUpgrades({});
+      setTotalEarned(0);
+      setTotalSpent(0);
+      setTimePlayed(0);
+      localStorage.clear();
     }
   };
 
   const clickUpgradeCost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
+
+  // Sekundid minutiteks
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
 
   return (
     <div className="app">
@@ -105,6 +153,16 @@ useEffect(() => {
             </div>
           );
         })}
+      </div>
+
+      <div className="stats" style={{ marginTop: '3rem' }}>
+        <h2>Statistics</h2>
+        <p>Total earned: {totalEarned.toFixed(2)} Pi</p>
+        <p>Total spent: {totalSpent.toFixed(2)} Pi</p>
+        <p>Time played: {formatTime(timePlayed)}</p>
+        <button onClick={handleReset} style={{ marginTop: '1rem', backgroundColor: '#e74c3c', color: 'white' }}>
+          Reset Game
+        </button>
       </div>
     </div>
   );
