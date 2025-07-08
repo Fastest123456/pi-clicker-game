@@ -10,6 +10,13 @@ const upgradesData = [
   { id: 'solar', name: 'Solar Farm', baseCost: 5000, income: 25 },
 ];
 
+const achievementsList = [
+  { id: 'click_once', name: 'First Click', condition: (state) => state.totalEarned >= 0.1 },
+  { id: 'earn_100', name: 'Earn 100 Pi', condition: (state) => state.totalEarned >= 100 },
+  { id: 'own_10_miners', name: 'Own 10 Miners', condition: (state) => (state.upgrades['miner'] || 0) >= 10 },
+  { id: 'earn_5000', name: 'Earn 5,000 Pi', condition: (state) => state.totalEarned >= 5000 },
+];
+
 function App() {
   const [piBalance, setPiBalance] = useState(() => parseFloat(localStorage.getItem('piBalance')) || 0);
   const [upgrades, setUpgrades] = useState(() => JSON.parse(localStorage.getItem('upgrades')) || {});
@@ -18,6 +25,10 @@ function App() {
   const [totalSpent, setTotalSpent] = useState(() => parseFloat(localStorage.getItem('totalSpent')) || 0);
   const [timePlayed, setTimePlayed] = useState(() => parseInt(localStorage.getItem('timePlayed')) || 0);
   const [floatingTexts, setFloatingTexts] = useState([]);
+  const [rebirthCount, setRebirthCount] = useState(() => parseInt(localStorage.getItem('rebirthCount')) || 0);
+  const [rebirthPoints, setRebirthPoints] = useState(() => parseInt(localStorage.getItem('rebirthPoints')) || 0);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   const addFloatingText = (text) => {
     const id = Date.now();
@@ -35,7 +46,9 @@ function App() {
     localStorage.setItem('totalEarned', totalEarned);
     localStorage.setItem('totalSpent', totalSpent);
     localStorage.setItem('timePlayed', timePlayed);
-  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed]);
+    localStorage.setItem('rebirthCount', rebirthCount);
+    localStorage.setItem('rebirthPoints', rebirthPoints);
+  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -47,7 +60,7 @@ function App() {
   const totalIncome = upgradesData.reduce((acc, upgrade) => {
     const count = upgrades[upgrade.id] || 0;
     return acc + count * upgrade.income;
-  }, 0);
+  }, 0) * (1 + rebirthCount * 0.1) * (rebirthCount >= 1 ? 10 : 1);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -62,12 +75,13 @@ function App() {
   }, [totalIncome]);
 
   const handleClick = () => {
+    const clickBonus = clickPower + rebirthCount * 0.1;
     setPiBalance(prev => {
-      const updated = parseFloat((prev + clickPower).toFixed(4));
-      setTotalEarned(prevEarned => parseFloat((prevEarned + clickPower).toFixed(4)));
+      const updated = parseFloat((prev + clickBonus).toFixed(4));
+      setTotalEarned(prevEarned => parseFloat((prevEarned + clickBonus).toFixed(4)));
       return updated;
     });
-    addFloatingText(`+${clickPower.toFixed(1)} Pi`);
+    addFloatingText(`+${clickBonus.toFixed(1)} Pi`);
   };
 
   const handleBuy = (id, baseCost) => {
@@ -89,19 +103,23 @@ function App() {
     }
   };
 
-  const handleReset = () => {
-    if (window.confirm("Are you sure you want to reset the game?")) {
-      setPiBalance(0);
-      setClickPower(0.1);
-      setUpgrades({});
-      setTotalEarned(0);
-      setTotalSpent(0);
-      setTimePlayed(0);
-      localStorage.clear();
+  const handleRebirth = () => {
+    if (piBalance >= 10000) {
+      if (window.confirm("Are you sure you want to REBIRTH? This will reset all progress.")) {
+        setPiBalance(0);
+        setClickPower(0.1);
+        setUpgrades({});
+        setTotalEarned(0);
+        setTotalSpent(0);
+        setTimePlayed(0);
+        setRebirthCount(prev => prev + 1);
+        setRebirthPoints(prev => prev + 1);
+        localStorage.clear();
+      }
+    } else {
+      alert("You need at least 10,000 Pi to rebirth.");
     }
   };
-
-  const clickUpgradeCost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -109,12 +127,45 @@ function App() {
     return `${mins}m ${secs}s`;
   };
 
+  const clickUpgradeCost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
+
   return (
     <div className="app">
       <h1>Pi Clicker</h1>
+
+      <div style={{ marginBottom: '1rem' }}>
+        <button onClick={() => setShowAchievements(!showAchievements)}>
+          {showAchievements ? 'Hide' : 'Show'} Achievements
+        </button>
+        <button onClick={() => setShowShop(!showShop)} style={{ marginLeft: '1rem' }}>
+          {showShop ? 'Hide' : 'Show'} Shop
+        </button>
+      </div>
+
+      {showAchievements && (
+        <div className="panel">
+          <h2>Achievements</h2>
+          <ul>
+            {achievementsList.map(ach => (
+              <li key={ach.id}>
+                {ach.name} {ach.condition({ totalEarned, upgrades }) ? '✅' : '❌'}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {showShop && (
+        <div className="panel">
+          <h2>Pi Shop</h2>
+          <p>Coming soon: Buy special boosts and items with real Pi!</p>
+        </div>
+      )}
+
       <p><strong>Balance:</strong> {piBalance.toFixed(2)} Pi</p>
       <p><strong>Pi / second:</strong> {totalIncome.toFixed(2)}</p>
-      <p><strong>Pi / click:</strong> {clickPower.toFixed(2)}</p>
+      <p><strong>Pi / click:</strong> {(clickPower + rebirthCount * 0.1).toFixed(2)}</p>
+      <p><strong>Rebirths:</strong> {rebirthCount} | Points: {rebirthPoints}</p>
 
       <button onClick={handleClick} className="coin-button">
         <img src="/pi-coin.png" alt="Pi coin" className="coin-image" />
@@ -157,8 +208,8 @@ function App() {
         <p>Total earned: {totalEarned.toFixed(2)} Pi</p>
         <p>Total spent: {totalSpent.toFixed(2)} Pi</p>
         <p>Time played: {formatTime(timePlayed)}</p>
-        <button onClick={handleReset} style={{ marginTop: '1rem', backgroundColor: '#e74c3c', color: 'white' }}>
-          Reset Game
+        <button onClick={handleRebirth} style={{ marginTop: '1rem', backgroundColor: '#9b59b6', color: 'white' }}>
+          Rebirth (10,000 Pi)
         </button>
       </div>
     </div>

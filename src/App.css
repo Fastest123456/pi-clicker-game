@@ -96,3 +96,11 @@ p {
   box-shadow: 0 0 10px 3px #2ecc71;
 }
 
+.panel {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
