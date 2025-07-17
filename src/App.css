@@ -23,3 +23,27 @@
     transform: translate(-50%, -50px);
   }
 }
+
+.float-text {
+  position: absolute;
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 18px;
+  animation: floatUp 1s ease-out forwards;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 60%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50px);
+  }
+}
