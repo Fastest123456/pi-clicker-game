@@ -13,8 +13,6 @@ const upgradesData = [
   { id: 'solar', name: 'Solar Farm', baseCost: 5000, income: 25 },
 ];
 
-const [showSettings, setShowSettings] = useState(false);
-
 // Achievements
 const achievementsList = [
   { id: 'click1', label: 'First Click', condition: (stats) => stats.totalEarned >= 0.1 },
