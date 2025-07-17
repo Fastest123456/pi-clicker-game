@@ -233,18 +233,19 @@ function App() {
       </button>
       {floatingTexts.map(t => (<div key={t.id} className="float-text">{t.text}</div>))}
 
-      <div className="shop">
-        <h2>Click Upgrade</h2>
-        <button
-          onClick={handleClickUpgrade}
-          className={piBalance >= Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1)) ? 'can-afford' : ''}
-        >
-          Upgrade click (+0.1 Pi) – {Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1))} Pi
-        </button>
+       <div className="shop">
+    <h2>Click Upgrade</h2>
+    <button
+      onClick={handleClickUpgrade}
+      className={piBalance >= Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1)) ? 'can-afford' : ''}
+    >
+      Upgrade click (+0.1 Pi) – {Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1))} Pi
+    </button>
 
-        <button onClick={handleRealPiPurchase}>
-  Buy 100 game Pi (costs 1 real Pi)
-</button>
+    {/* 👇 Reaal-Pi ostu nupp ainult shop paneelis */}
+    <button onClick={handleRealPiPurchase}>
+      Buy 100 game Pi (costs 1 real Pi)
+    </button>
 
         <h2>Upgrades</h2>
         {upgradesData.map(u => {
