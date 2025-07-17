@@ -172,6 +172,14 @@ function App() {
         <button onClick={() => setShowSettings(s => !s)}>Settings</button>
       </div>
 
+{showShop && (
+  <div className="panel">
+    <h2>Buy Pi</h2>
+    <button onClick={handleRealPiPurchase}>
+      Buy 100 game Pi (costs 1 real Pi)
+    </button>
+  </div>
+)}
       {showAchievements && (
         <div className="panel achievements">
           <h2>Achievements</h2>
