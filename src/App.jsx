@@ -13,6 +13,8 @@ const upgradesData = [
   { id: 'solar', name: 'Solar Farm', baseCost: 5000, income: 25 },
 ];
 
+const [showSettings, setShowSettings] = useState(false);
+
 // Achievements
 const achievementsList = [
   { id: 'click1', label: 'First Click', condition: (stats) => stats.totalEarned >= 0.1 },
@@ -126,6 +128,7 @@ function App() {
         <button onClick={() => setShowShop(s => !s)}>Pi Shop</button>
         <button onClick={() => setShowAchievements(a => !a)}>Achievements</button>
         <button onClick={() => setShowRebirthShop(r => !r)}>Rebirth Shop</button>
+        <button onClick={() => setShowSettings(s => !s)}>Settings</button>
       </div>
 
       {showAchievements && (
@@ -138,6 +141,39 @@ function App() {
           </ul>
         </div>
       )}
+
+      {showSettings && (
+  <div className="panel settings">
+    <h2>Settings</h2>
+    <label>
+      <input
+        type="checkbox"
+        checked={vibrationEnabled}
+        onChange={() => setVibrationEnabled(v => !v)}
+      />
+      Vibration {vibrationEnabled ? "ON" : "OFF"}
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        checked={soundEnabled}
+        onChange={() => setSoundEnabled(s => !s)}
+      />
+      Sound {soundEnabled ? "ON" : "OFF"}
+    </label>
+    <button
+      onClick={() => {
+        if (window.confirm("Are you sure you want to reset the game? This will erase all progress.")) {
+          localStorage.clear();
+          window.location.reload();
+        }
+      }}
+      style={{ marginTop: "1rem", backgroundColor: "#e74c3c", color: "#fff" }}
+    >
+      Reset Game
+    </button>
+  </div>
+)}
 
       {showRebirthShop && (
         <div className="panel">
