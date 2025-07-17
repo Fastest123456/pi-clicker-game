@@ -75,11 +75,28 @@ function App() {
   }, [totalIncome]);
 
   const handleResetGame = () => {
-    if (window.confirm('Are you sure you want to reset your game? This will delete all your progress.')) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
+  if (window.confirm('Are you sure you want to reset your game? This will delete all your progress.')) {
+    localStorage.clear();
+    // Nulli kõik state'id
+    setPiBalance(0);
+    setUpgrades({});
+    setClickPower(0.1);
+    setTotalEarned(0);
+    setTotalSpent(0);
+    setTimePlayed(0);
+    setRebirthCount(0);
+    setRebirthPoints(0);
+    setPermBoost(0);
+    setRebirthCost(10000);
+    setVibration(true);
+    setSound(true);
+
+    setTimeout(() => {
+      window.location.reload(); // Uuenda lehte pärast puhastamist
+    }, 200);
+  }
+};
+
 
   const handleClick = () => {
     if (vibration && window.navigator.vibrate) window.navigator.vibrate(30);
