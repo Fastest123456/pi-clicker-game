@@ -1,8 +1,7 @@
-// [Pi Clicker Game with Fixes]
+// [Pi Clicker Game – Updated with Dynamic Rebirth System]
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// Upgrades that generate Pi/s
 const upgradesData = [
   { id: 'pioneer', name: 'Pioneer', baseCost: 20, income: 0.05 },
   { id: 'miner', name: 'Miner', baseCost: 50, income: 0.2 },
@@ -12,7 +11,6 @@ const upgradesData = [
   { id: 'solar', name: 'Solar Farm', baseCost: 5000, income: 25 },
 ];
 
-// Achievement conditions
 const achievementsList = [
   { id: 'click1', label: 'First Click', condition: (stats) => stats.totalEarned >= 0.1 },
   { id: 'pi100', label: 'Earn 100 Pi', condition: (stats) => stats.totalEarned >= 100 },
@@ -30,6 +28,7 @@ function App() {
   const [rebirthCount, setRebirthCount] = useState(() => parseInt(localStorage.getItem('rebirthCount')) || 0);
   const [rebirthPoints, setRebirthPoints] = useState(() => parseInt(localStorage.getItem('rebirthPoints')) || 0);
   const [permBoost, setPermBoost] = useState(() => parseFloat(localStorage.getItem('permBoost')) || 0);
+  const [rebirthCost, setRebirthCost] = useState(() => parseInt(localStorage.getItem('rebirthCost')) || 10000);
 
   const [floatingTexts, setFloatingTexts] = useState([]);
   const [autoClickerActive, setAutoClickerActive] = useState(false);
@@ -49,22 +48,15 @@ function App() {
     localStorage.setItem('rebirthCount', rebirthCount);
     localStorage.setItem('rebirthPoints', rebirthPoints);
     localStorage.setItem('permBoost', permBoost);
-  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints, permBoost]);
+    localStorage.setItem('rebirthCost', rebirthCost);
+  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints, permBoost, rebirthCost]);
 
   useEffect(() => {
     const timer = setInterval(() => setTimePlayed(p => p + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (autoClickerActive) {
-      const intv = setInterval(() => handleClick(), 1000);
-      setTimeout(() => setAutoClickerActive(false), 600000);
-      return () => clearInterval(intv);
-    }
-  }, [autoClickerActive]);
-
-  const incomeMultiplier = (1 + rebirthCount * 0.1) * (rebirthCount >= 1 ? 10 : 1) * (activeBoost ? 2 : 1) * (1 + permBoost);
+  const incomeMultiplier = (1 + rebirthCount * 0.1) * (activeBoost ? 2 : 1) * (1 + permBoost);
   const totalIncome = upgradesData.reduce((acc, u) => acc + (upgrades[u.id] || 0) * u.income, 0) * incomeMultiplier;
 
   useEffect(() => {
@@ -109,20 +101,25 @@ function App() {
   };
 
   const handleRebirth = () => {
-    if (piBalance >= 10000) {
-      if (window.confirm('Migrate to Mainnet? This resets your progress and grants bonuses.')) {
+    if (piBalance >= rebirthCost) {
+      if (window.confirm(`Migrate to Mainnet for ${rebirthCost} Pi?
+This resets progress but grants permanent bonuses.`)) {
         setPiBalance(0);
         setClickPower(0.1);
         setUpgrades({});
         setTotalEarned(0);
         setTotalSpent(0);
         setTimePlayed(0);
-        setRebirthCount(r => r + 1);
-        setRebirthPoints(p => p + 10);
         setActiveBoost(null);
         setAutoClickerActive(false);
+        setRebirthCount(r => r + 1);
+        setRebirthPoints(p => p + 10);
+        setPermBoost(b => parseFloat((b + 0.1).toFixed(2)));
+        setRebirthCost(c => c + 15000);
       }
-    } else alert('You need 10,000 Pi to migrate.');
+    } else {
+      alert(`You need ${rebirthCost} Pi to migrate.`);
+    }
   };
 
   const completedAchievements = achievementsList.filter(a => a.condition({ totalEarned, upgrades }));
@@ -130,7 +127,6 @@ function App() {
   return (
     <div className="app">
       <h1>Pi Clicker</h1>
-
       <div className="top-buttons">
         <button onClick={() => setShowShop(s => !s)}>Pi Shop</button>
         <button onClick={() => setShowAchievements(a => !a)}>Achievements</button>
@@ -159,6 +155,7 @@ function App() {
       <p><strong>Pi / second:</strong> {totalIncome.toFixed(2)}</p>
       <p><strong>Pi / click:</strong> {(clickPower + rebirthCount * 0.1).toFixed(2)}</p>
       <p><strong>Rebirths:</strong> {rebirthCount} | Points: {rebirthPoints}</p>
+      <p><strong>Permanent Boost:</strong> +{(permBoost * 100).toFixed(0)}% income</p>
 
       <button onClick={handleClick} className="coin-button">
         <img src="/pi-coin.png" alt="Pi coin" className="coin-image" />
@@ -197,7 +194,7 @@ function App() {
         <p>Total earned: {totalEarned.toFixed(2)} Pi</p>
         <p>Total spent: {totalSpent.toFixed(2)} Pi</p>
         <p>Time played: {Math.floor(timePlayed / 60)}m {timePlayed % 60}s</p>
-        <button onClick={handleRebirth} className="rebirth-btn">Migrate to Mainnet (10,000 Pi)</button>
+        <button onClick={handleRebirth} className="rebirth-btn">Migrate to Mainnet ({rebirthCost.toLocaleString()} Pi)</button>
       </div>
     </div>
   );
