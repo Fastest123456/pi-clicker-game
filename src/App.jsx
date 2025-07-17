@@ -244,7 +244,9 @@ function App() {
 
   {/* 👇 Ainult siis, kui on avatud Pi Shop */}
   {showShop && (
-  <div className="top-buttons">
+  <div className="panel">
+    <h2>Buy Game Pi</h2>
+    <p>You can buy 100 game Pi for 1 real Pi.</p>
     <button onClick={handleRealPiPurchase}>
       Buy 100 game Pi (1 real Pi)
     </button>
