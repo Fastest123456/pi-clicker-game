@@ -246,7 +246,7 @@ function App() {
   {showShop && (
   <div className="panel">
     <h2>Buy Game Pi</h2>
-    <p>You can buy 100 game Pi for 1 real Pi.</p>
+    <p>Use 1 real Pi to get 100 game Pi.</p>
     <button onClick={handleRealPiPurchase}>
       Buy 100 game Pi (1 real Pi)
     </button>
