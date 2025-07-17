@@ -97,6 +97,15 @@ function App() {
     }
   };
 
+  const addFloatingText = (text) => {
+  const id = Date.now();
+  setFloatingTexts(prev => [...prev, { id, text }]);
+  setTimeout(() => {
+    setFloatingTexts(prev => prev.filter(t => t.id !== id));
+  }, 1000);
+};
+
+
   const handleRebirth = () => {
     if (piBalance >= 10000) {
       if (window.confirm('Migrate to Mainnet? This resets your progress and grants bonuses.')) {
