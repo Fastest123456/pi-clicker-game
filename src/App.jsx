@@ -244,10 +244,12 @@ function App() {
 
   {/* 👇 Ainult siis, kui on avatud Pi Shop */}
   {showShop && (
+  <div className="top-buttons">
     <button onClick={handleRealPiPurchase}>
-      Buy 100 game Pi (costs 1 real Pi)
+      Buy 100 game Pi (1 real Pi)
     </button>
-  )}
+  </div>
+)}
 
   <h2>Upgrades</h2>
   {upgradesData.map(u => {
