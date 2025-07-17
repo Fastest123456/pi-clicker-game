@@ -67,6 +67,47 @@ function App() {
     return () => clearInterval(interval);
   }, [totalIncome]);
 
+  const handleRealPiPurchase = async () => {
+  if (!window.Pi) {
+    alert("Pi Network SDK not found.");
+    return;
+  }
+
+  const paymentData = {
+    amount: 1, // 1 Pi
+    memo: "Buy 100 game Pi",
+    metadata: { type: "buy_game_pi", gamePiAmount: 100 },
+  };
+
+  try {
+    const scopes = ['payments'];
+    const accessToken = await window.Pi.authenticate(scopes, () => {});
+    
+    const payment = await window.Pi.createPayment(paymentData, {
+      onReadyForServerApproval: (paymentId) => {
+        console.log("Payment ready for server approval:", paymentId);
+      },
+      onReadyForServerCompletion: (paymentId, txid) => {
+        console.log("Payment completed:", paymentId, txid);
+        alert("Payment successful!");
+        setPiBalance(p => p + 100); // Lisa 100 mängu Pi
+      },
+      onCancel: (paymentId) => {
+        console.log("Payment cancelled:", paymentId);
+        alert("Payment cancelled.");
+      },
+      onError: (error, payment) => {
+        console.error("Payment error:", error);
+        alert("Payment failed.");
+      },
+    });
+  } catch (err) {
+    console.error("Authentication or payment error:", err);
+    alert("Pi authentication failed.");
+  }
+};
+
+
   const addFloatingText = (text) => {
     const id = Date.now();
     setFloatingTexts(f => [...f, { id, text }]);
@@ -117,6 +158,8 @@ function App() {
   };
 
   const completedAchievements = achievementsList.filter(a => a.condition({ totalEarned, upgrades }));
+
+
 
   return (
     <div className="app">
@@ -198,6 +241,10 @@ function App() {
         >
           Upgrade click (+0.1 Pi) – {Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1))} Pi
         </button>
+
+        <button onClick={handleRealPiPurchase}>
+  Buy 100 game Pi (costs 1 real Pi)
+</button>
 
         <h2>Upgrades</h2>
         {upgradesData.map(u => {
