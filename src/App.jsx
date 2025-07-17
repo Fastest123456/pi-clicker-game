@@ -1,4 +1,4 @@
-// [Pi Clicker Game – Updated with Dynamic Rebirth System]
+// [Pi Clicker Game – With Settings Panel]
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -30,6 +30,9 @@ function App() {
   const [permBoost, setPermBoost] = useState(() => parseFloat(localStorage.getItem('permBoost')) || 0);
   const [rebirthCost, setRebirthCost] = useState(() => parseInt(localStorage.getItem('rebirthCost')) || 10000);
 
+  const [vibration, setVibration] = useState(() => JSON.parse(localStorage.getItem('vibration')) ?? true);
+  const [sound, setSound] = useState(() => JSON.parse(localStorage.getItem('sound')) ?? true);
+
   const [floatingTexts, setFloatingTexts] = useState([]);
   const [autoClickerActive, setAutoClickerActive] = useState(false);
   const [activeBoost, setActiveBoost] = useState(null);
@@ -37,6 +40,7 @@ function App() {
   const [showShop, setShowShop] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showRebirthShop, setShowRebirthShop] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('piBalance', piBalance);
@@ -49,7 +53,9 @@ function App() {
     localStorage.setItem('rebirthPoints', rebirthPoints);
     localStorage.setItem('permBoost', permBoost);
     localStorage.setItem('rebirthCost', rebirthCost);
-  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints, permBoost, rebirthCost]);
+    localStorage.setItem('vibration', vibration);
+    localStorage.setItem('sound', sound);
+  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints, permBoost, rebirthCost, vibration, sound]);
 
   useEffect(() => {
     const timer = setInterval(() => setTimePlayed(p => p + 1), 1000);
@@ -68,17 +74,34 @@ function App() {
     return () => clearInterval(interval);
   }, [totalIncome]);
 
+  const handleResetGame = () => {
+    if (window.confirm('Are you sure you want to reset your game? This will delete all your progress.')) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  };
+
+  const handleClick = () => {
+    if (vibration && window.navigator.vibrate) window.navigator.vibrate(30);
+    const bonus = clickPower + rebirthCount * 0.1;
+    setPiBalance(p => parseFloat((p + bonus).toFixed(4)));
+    setTotalEarned(e => parseFloat((e + bonus).toFixed(4)));
+    addFloatingText(`+${bonus.toFixed(1)} Pi`);
+  };
+
   const addFloatingText = (text) => {
     const id = Date.now();
     setFloatingTexts(f => [...f, { id, text }]);
     setTimeout(() => setFloatingTexts(f => f.filter(t => t.id !== id)), 1000);
   };
 
-  const handleClick = () => {
-    const bonus = clickPower + rebirthCount * 0.1;
-    setPiBalance(p => parseFloat((p + bonus).toFixed(4)));
-    setTotalEarned(e => parseFloat((e + bonus).toFixed(4)));
-    addFloatingText(`+${bonus.toFixed(1)} Pi`);
+  const handleClickUpgrade = () => {
+    const cost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
+    if (piBalance >= cost) {
+      setPiBalance(p => parseFloat((p - cost).toFixed(4)));
+      setClickPower(cp => parseFloat((cp + 0.1).toFixed(2)));
+      setTotalSpent(s => parseFloat((s + cost).toFixed(4)));
+    }
   };
 
   const handleBuy = (id, baseCost) => {
@@ -88,15 +111,6 @@ function App() {
       setPiBalance(p => parseFloat((p - cost).toFixed(4)));
       setTotalSpent(s => parseFloat((s + cost).toFixed(4)));
       setUpgrades(u => ({ ...u, [id]: count + 1 }));
-    }
-  };
-
-  const handleClickUpgrade = () => {
-    const cost = Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1));
-    if (piBalance >= cost) {
-      setPiBalance(p => parseFloat((p - cost).toFixed(4)));
-      setClickPower(cp => parseFloat((cp + 0.1).toFixed(2)));
-      setTotalSpent(s => parseFloat((s + cost).toFixed(4)));
     }
   };
 
@@ -131,7 +145,23 @@ This resets progress but grants permanent bonuses.`)) {
         <button onClick={() => setShowShop(s => !s)}>Pi Shop</button>
         <button onClick={() => setShowAchievements(a => !a)}>Achievements</button>
         <button onClick={() => setShowRebirthShop(r => !r)}>Rebirth Shop</button>
+        <button onClick={() => setShowSettings(p => !p)}>Settings</button>
       </div>
+
+      {showSettings && (
+        <div className="panel">
+          <h2>Settings</h2>
+          <label>
+            <input type="checkbox" checked={vibration} onChange={() => setVibration(v => !v)} />
+            Vibration
+          </label><br/>
+          <label>
+            <input type="checkbox" checked={sound} onChange={() => setSound(s => !s)} />
+            Sound
+          </label><br/>
+          <button onClick={handleResetGame} className="danger">RESET Game</button>
+        </div>
+      )}
 
       {showAchievements && (
         <div className="panel achievements">
@@ -155,7 +185,7 @@ This resets progress but grants permanent bonuses.`)) {
       <p><strong>Pi / second:</strong> {totalIncome.toFixed(2)}</p>
       <p><strong>Pi / click:</strong> {(clickPower + rebirthCount * 0.1).toFixed(2)}</p>
       <p><strong>Rebirths:</strong> {rebirthCount} | Points: {rebirthPoints}</p>
-      <p><strong>Permanent Boost:</strong> +{(permBoost * 100).toFixed(0)}% income</p>
+      <p><strong>Permanent Boost:</strong> +{(permBoost * 100).toFixed(0)}%</p>
 
       <button onClick={handleClick} className="coin-button">
         <img src="/pi-coin.png" alt="Pi coin" className="coin-image" />
