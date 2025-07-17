@@ -250,16 +250,6 @@ function App() {
     Upgrade click (+0.1 Pi) – {Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1))} Pi
   </button>
 
-  {/* 👇 Ainult siis, kui on avatud Pi Shop */}
-  {showShop && (
-  <div className="panel">
-    <h2>Buy Game Pi</h2>
-    <p>Use 1 real Pi to get 100 game Pi.</p>
-    <button onClick={handleRealPiPurchase}>
-      Buy 100 game Pi (1 real Pi)
-    </button>
-  </div>
-)}
 
   <h2>Upgrades</h2>
   {upgradesData.map(u => {
