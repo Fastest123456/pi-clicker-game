@@ -94,3 +94,10 @@ p {
 .shop button.can-afford {
   box-shadow: 0 0 10px 3px #2ecc71;
 }
+
+.panel {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: #f9f9f9;
+}
