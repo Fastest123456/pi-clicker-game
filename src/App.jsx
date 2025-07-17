@@ -233,7 +233,8 @@ function App() {
       </button>
       {floatingTexts.map(t => (<div key={t.id} className="float-text">{t.text}</div>))}
 
-       <div className="shop">
+   {showShop && (
+  <div className="shop">
     <h2>Click Upgrade</h2>
     <button
       onClick={handleClickUpgrade}
@@ -242,29 +243,29 @@ function App() {
       Upgrade click (+0.1 Pi) – {Math.floor(50 * Math.pow(1.5, (clickPower * 10) - 1))} Pi
     </button>
 
-    {/* 👇 Reaal-Pi ostu nupp ainult shop paneelis */}
+    {/* 👇 Reaal-Pi ostu nupp ainult Pi Shopi sees */}
     <button onClick={handleRealPiPurchase}>
       Buy 100 game Pi (costs 1 real Pi)
     </button>
 
-        <h2>Upgrades</h2>
-        {upgradesData.map(u => {
-          const count = upgrades[u.id] || 0;
-          const cost = Math.floor(u.baseCost * Math.pow(1.2, count));
-          return (
-            <div key={u.id}>
-              <p><strong>{u.name}</strong> (owned: {count}) – Generates +{u.income}/s</p>
-              <button
-                onClick={() => handleBuy(u.id, u.baseCost)}
-                className={piBalance >= cost ? 'can-afford' : ''}
-              >
-                Buy for {cost} Pi
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
+    <h2>Upgrades</h2>
+    {upgradesData.map(u => {
+      const count = upgrades[u.id] || 0;
+      const cost = Math.floor(u.baseCost * Math.pow(1.2, count));
+      return (
+        <div key={u.id}>
+          <p><strong>{u.name}</strong> (owned: {count}) – Generates +{u.income}/s</p>
+          <button
+            onClick={() => handleBuy(u.id, u.baseCost)}
+            className={piBalance >= cost ? 'can-afford' : ''}
+          >
+            Buy for {cost} Pi
+          </button>
+        </div>
+      );
+    })}
+  </div>
+)}
       <div className="stats">
         <h2>Statistics</h2>
         <p>Total earned: {totalEarned.toFixed(2)} Pi</p>
