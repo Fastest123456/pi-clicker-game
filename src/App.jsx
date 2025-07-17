@@ -1,6 +1,6 @@
 
 // Pi Clicker Game – Täielik versioon
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 // Upgrades
@@ -43,23 +43,19 @@ function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('piBalance', piBalance);
-    localStorage.setItem('upgrades', JSON.stringify(upgrades));
-    localStorage.setItem('clickPower', clickPower);
-    localStorage.setItem('totalEarned', totalEarned);
-    localStorage.setItem('totalSpent', totalSpent);
-    localStorage.setItem('timePlayed', timePlayed);
-    localStorage.setItem('rebirthCount', rebirthCount);
-    localStorage.setItem('rebirthPoints', rebirthPoints);
-    localStorage.setItem('permBoost', permBoost);
-  }, [piBalance, upgrades, clickPower, totalEarned, totalSpent, timePlayed, rebirthCount, rebirthPoints, permBoost]);
-
-  useEffect(() => {
     const timer = setInterval(() => setTimePlayed(p => p + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const incomeMultiplier = Math.pow(2, rebirthCount) * (1 + rebirthCount * 0.1) * (activeBoost ? 2 : 1) * (1 + permBoost);
+  useEffect(() => {
+    if (autoClickerActive) {
+      const intv = setInterval(() => handleClick(), 1000);
+      setTimeout(() => setAutoClickerActive(false), 600000);
+      return () => clearInterval(intv);
+    }
+  }, [autoClickerActive]);
+
+  const incomeMultiplier = (1 + rebirthCount * 0.1) * (rebirthCount >= 1 ? 10 : 1) * (activeBoost ? 2 : 1) * (1 + permBoost);
   const totalIncome = upgradesData.reduce((acc, u) => acc + (upgrades[u.id] || 0) * u.income, 0) * incomeMultiplier;
 
   useEffect(() => {
@@ -71,11 +67,17 @@ function App() {
     return () => clearInterval(interval);
   }, [totalIncome]);
 
+  const addFloatingText = (text) => {
+    const id = Date.now();
+    setFloatingTexts(f => [...f, { id, text }]);
+    setTimeout(() => setFloatingTexts(f => f.filter(t => t.id !== id)), 1000);
+  };
+
   const handleClick = () => {
     const bonus = clickPower + rebirthCount * 0.1;
     setPiBalance(p => parseFloat((p + bonus).toFixed(4)));
     setTotalEarned(e => parseFloat((e + bonus).toFixed(4)));
-    if (vibrationEnabled && window.navigator.vibrate) window.navigator.vibrate(50);
+    addFloatingText(`+${bonus.toFixed(1)} Pi`);
   };
 
   const handleBuy = (id, baseCost) => {
@@ -97,15 +99,6 @@ function App() {
     }
   };
 
-  const addFloatingText = (text) => {
-  const id = Date.now();
-  setFloatingTexts(prev => [...prev, { id, text }]);
-  setTimeout(() => {
-    setFloatingTexts(prev => prev.filter(t => t.id !== id));
-  }, 1000);
-};
-
-
   const handleRebirth = () => {
     if (piBalance >= 10000) {
       if (window.confirm('Migrate to Mainnet? This resets your progress and grants bonuses.')) {
@@ -123,13 +116,6 @@ function App() {
     } else alert('You need 10,000 Pi to migrate.');
   };
 
-  const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset the game? This cannot be undone.')) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
-
   const completedAchievements = achievementsList.filter(a => a.condition({ totalEarned, upgrades }));
 
   return (
@@ -140,7 +126,6 @@ function App() {
         <button onClick={() => setShowShop(s => !s)}>Pi Shop</button>
         <button onClick={() => setShowAchievements(a => !a)}>Achievements</button>
         <button onClick={() => setShowRebirthShop(r => !r)}>Rebirth Shop</button>
-        <button onClick={() => setShowSettings(s => !s)}>Settings</button>
       </div>
 
       {showAchievements && (
@@ -161,23 +146,6 @@ function App() {
         </div>
       )}
 
-      {showSettings && (
-        <div className="panel">
-          <h2>Settings</h2>
-          <label>
-            <input type="checkbox" checked={vibrationEnabled} onChange={() => setVibrationEnabled(v => !v)} />
-            Vibration: {vibrationEnabled ? 'ON' : 'OFF'}
-          </label>
-          <br />
-          <label>
-            <input type="checkbox" checked={soundEnabled} onChange={() => setSoundEnabled(v => !v)} />
-            Sound: {soundEnabled ? 'ON' : 'OFF'}
-          </label>
-          <br />
-          <button onClick={handleReset}>Reset Game</button>
-        </div>
-      )}
-
       <p><strong>Balance:</strong> {piBalance.toFixed(2)} Pi</p>
       <p><strong>Pi / second:</strong> {totalIncome.toFixed(2)}</p>
       <p><strong>Pi / click:</strong> {(clickPower + rebirthCount * 0.1).toFixed(2)}</p>
@@ -186,6 +154,7 @@ function App() {
       <button onClick={handleClick} className="coin-button">
         <img src="/pi-coin.png" alt="Pi coin" className="coin-image" />
       </button>
+      {floatingTexts.map(t => (<div key={t.id} className="float-text">{t.text}</div>))}
 
       <div className="shop">
         <h2>Click Upgrade</h2>
@@ -226,3 +195,4 @@ function App() {
 }
 
 export default App;
+
