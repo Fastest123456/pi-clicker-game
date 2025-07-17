@@ -1,20 +1,32 @@
-/* App.css lisa lõppu see */
-
 body {
   margin: 0;
   background: linear-gradient(to bottom, #fceabb, #f8b500);
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .app {
   text-align: center;
   font-family: 'Segoe UI', sans-serif;
   padding: 2rem;
+  width: 90%;
   max-width: 400px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  color: #2c3e50;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+p {
+  font-size: 1.2rem;
+  margin: 0.5rem 0;
 }
 
 .coin-button {
@@ -57,52 +69,4 @@ body {
 
 .shop button:hover {
   background-color: #d35400;
-}
-
-.float-text {
-  position: absolute;
-  color: #ffd700;
-  font-weight: bold;
-  font-size: 18px;
-  animation: floatUp 1s ease-out forwards;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 60%;
-  pointer-events: none;
-  z-index: 1000;
-}
-
-@keyframes floatUp {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50px);
-  }
-}
-
-.float-text {
-  position: absolute;
-  color: #ffd700;
-  font-weight: bold;
-  font-size: 18px;
-  animation: floatUp 1s ease-out forwards;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 60%;
-  pointer-events: none;
-  z-index: 1000;
-}
-
-@keyframes floatUp {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50px);
-  }
 }
